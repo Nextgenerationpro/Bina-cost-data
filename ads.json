@@ -1,7 +1,7 @@
 {
   "settings": {
-    "gridFrequency": 6,
-    "interstitialFrequency": 5
+    "gridFrequency": 3,
+    "interstitialFrequency": 3
   },
   "gridAds": [],
   "topBanner": [],
