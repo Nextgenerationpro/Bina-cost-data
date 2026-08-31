@@ -1,6 +1,6 @@
 {
   "settings": {
-    "gridFrequency": 2,
+    "gridFrequency": 6,
     "interstitialFrequency": 3
   },
   "gridAds": [
