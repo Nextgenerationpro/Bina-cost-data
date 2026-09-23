@@ -2,7 +2,7 @@
   "settings": {
     "gridFrequency": 6,
     "interstitialFrequency": 5,
-    "activeStripOn": true
+    "activeStripOn": false
   },
   "gridAds": [
     {
