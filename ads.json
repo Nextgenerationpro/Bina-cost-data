@@ -1,7 +1,8 @@
 {
   "settings": {
     "gridFrequency": 6,
-    "interstitialFrequency": 5
+    "interstitialFrequency": 5,
+    "activeStripOn": false
   },
   "gridAds": [],
   "topBanner": [],
