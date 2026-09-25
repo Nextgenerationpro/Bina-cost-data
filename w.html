@@ -13,6 +13,7 @@ body{font-family:system-ui,-apple-system,'Segoe UI',Tahoma,'Noto Sans Arabic',sa
 .wrap{width:100%;max-width:460px;padding:16px}
 .card{background:#fff;border:1px solid #dfe8e3;border-radius:20px;padding:20px;text-align:center;box-shadow:0 4px 14px rgba(20,60,40,.06)}
 .av{width:92px;height:92px;border-radius:50%;object-fit:cover;background:#e7f5ee;margin:-52px auto 10px;display:flex;align-items:center;justify-content:center;font-size:40px;border:4px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.15)}
+.av.sq{border-radius:18px}
 h2{font-size:21px;font-weight:900;margin-bottom:4px}
 .pf{color:#1f8a5b;font-weight:700;font-size:14.5px;line-height:1.7}
 .ct{color:#6b7a72;font-size:13.5px;margin-top:2px}
@@ -38,33 +39,54 @@ h2{font-size:21px;font-weight:900;margin-bottom:4px}
 </div>
 <script>
 /* ===== settings ===== */
-const PACKAGE='com.workers.krd';                    // the Android package of the app
+const PACKAGE='com.workers.krd';                    // the Android package of the CUSTOMER app (workers + trucks live in the same app)
 const DOWNLOAD_URL='';                              // the download link of the app (put it here; the button is hidden while empty)
 const WORKERS_URL='https://raw.githubusercontent.com/Nextgenerationpro/bina-cost-data/main/workers.json';
+const ADS_URL='https://raw.githubusercontent.com/Nextgenerationpro/bina-cost-data/main/ads.json';   // trucks live inside ads.json
 
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const id=(new URLSearchParams(location.search).get('id')||'').replace(/[^A-Za-z0-9_-]/g,'');
+const qs=new URLSearchParams(location.search);
+const workerId=(qs.get('id')||'').replace(/[^A-Za-z0-9_-]/g,'');
+const truckId=(qs.get('truck')||'').replace(/[^A-Za-z0-9_-]/g,'');
+const isTruck = !!truckId && !workerId;
+const id = isTruck ? truckId : workerId;
 const isAndroid=/android/i.test(navigator.userAgent);
 
 if(DOWNLOAD_URL){ const d=$('#dl'); d.href=DOWNLOAD_URL; d.style.display='block'; }
 
-/* open the worker inside the app (Android) — falls back to the download page when the app is not installed */
+/* open the worker/truck inside the app (Android) — falls back to the download page when the app is not installed */
 function appLink(){
   const fb = DOWNLOAD_URL ? ';S.browser_fallback_url='+encodeURIComponent(DOWNLOAD_URL) : '';
-  return 'intent://w/'+id+'#Intent;scheme=wasta;package='+PACKAGE+fb+';end';
+  const path = isTruck ? 'truck/'+id : 'w/'+id;                 // MainActivity tells these two apart by the host segment
+  return 'intent://'+path+'#Intent;scheme=wasta;package='+PACKAGE+fb+';end';
 }
 if(isAndroid && id){
   const b=$('#openApp'); b.href=appLink(); b.style.display='block';
   setTimeout(()=>{ try{ location.href=appLink(); }catch(e){} },400);      // most phones open the app by themselves
 } else if(!isAndroid){
-  $('#note').textContent='ئەپی وەستاکان بۆ ئەندرۆیدە. لێرەوە دەتوانیت پەیوەندی بە وەستاکە بکەیت.';
+  $('#note').textContent='ئەپی وەستاکان بۆ ئەندرۆیدە. لێرەوە دەتوانیت پەیوەندی بکەیت.';
 }
 
-/* show the worker, so the link is useful even without the app */
+/* show the worker or truck, so the link is useful even without the app */
 (async function(){
   const card=$('#card');
   if(!id){ card.innerHTML='<div class="pf">لینکەکە تەواو نییە.</div>'; return; }
+
+  if(isTruck){
+    try{
+      const r=await fetch(ADS_URL,{cache:'no-cache'}); const ads=await r.json();
+      const t=((ads&&ads.trucks)||[]).find(x=>x.id===id);
+      if(!t){ card.innerHTML='<div class="pf">ئەم سەیارەیە نەدۆزرایەوە.</div>'; return; }
+      const loc=[t.city,...(t.neighborhoods||[])].filter(Boolean).join('، ');
+      card.innerHTML=(t.image?'<img class="av sq" src="'+esc(t.image)+'" alt="">':'<div class="av sq">🚛</div>')+
+        '<h2>'+esc(t.name)+'</h2>'+(loc?'<div class="ct">📍 '+esc(loc)+'</div>':'')+
+        (t.phone?'<a class="btn b-call" href="tel:'+esc(t.phone)+'">📞 پەیوەندی</a>':'');
+      document.title=t.name+' — سەیارەی بار — وەستاکان';
+    }catch(e){ card.innerHTML='<div class="pf">نەتوانرا زانیاری سەیارە بخوێنرێتەوە.</div>'; }
+    return;
+  }
+
   try{
     const r=await fetch(WORKERS_URL,{cache:'no-cache'}); const list=await r.json();
     const w=(list||[]).find(x=>x.id===id);
