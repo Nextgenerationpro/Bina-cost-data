@@ -2,7 +2,8 @@
   "settings": {
     "gridFrequency": 6,
     "interstitialFrequency": 5,
-    "activeStripOn": false
+    "activeStripOn": false,
+    "appVisitCounterOn": true
   },
   "gridAds": [],
   "topBanner": [
